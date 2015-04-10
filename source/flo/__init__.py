@@ -24,7 +24,7 @@ class HIRS_CTP_DAILY(Computation):
                                                                 context['ctp_version'], day)
 
         for (i, c) in enumerate(ctp_orbital_contexts):
-            task.input('CTPO-{}'.format(i), HIRS_CTP_ORBITAL().dataset('out').product(c))
+            task.input('CTPO-{}'.format(i), HIRS_CTP_ORBITAL().dataset('out').product(c), True)
 
     def run_task(self, inputs, context):
 
