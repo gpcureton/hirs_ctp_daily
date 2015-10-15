@@ -6,6 +6,10 @@ from flo.time import TimeInterval
 from flo.util import augmented_env, symlink_inputs_to_working_dir
 from flo.sw.hirs_ctp_orbital import HIRS_CTP_ORBITAL
 
+# every module should have a LOG object
+import logging, traceback
+LOG = logging.getLogger(__file__)
+
 
 class HIRS_CTP_DAILY(Computation):
 
