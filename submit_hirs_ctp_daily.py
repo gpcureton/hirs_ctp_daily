@@ -8,9 +8,6 @@ from calendar import monthrange
 import logging
 import traceback
 
-from subprocess import CalledProcessError, call
-from subprocess import Popen, STDOUT, PIPE
-
 from flo.time import TimeInterval
 from flo.ui import safe_submit_order
 from flo.product import StoredProductCatalog
@@ -37,8 +34,8 @@ SPC = StoredProductCatalog()
 # Latest Computation versions.
 hirs_version = 'v20151014'
 collo_version = 'v20151014'
-csrb_version  = 'v20150915'
-ctp_version   = 'v20150915'
+csrb_version = 'v20150915'
+ctp_version = 'v20150915'
 
 platform_choices = ['noaa-06', 'noaa-07', 'noaa-08', 'noaa-09', 'noaa-10', 'noaa-11',
                     'noaa-12', 'noaa-14', 'noaa-15', 'noaa-16', 'noaa-17', 'noaa-18',
@@ -63,6 +60,7 @@ wedge = timedelta(seconds=1.)
     #TimeInterval(datetime(2016, 12, 1),datetime(2017, 1, 1) - wedge),
 #]
 
+# Examine how many of the defined contexts are populated
 intervals = []
 year,month = 2016,5
 months = range(1, 12 + 1)
@@ -74,7 +72,7 @@ for month in months:
     contexts = comp.find_contexts(platform, hirs_version, collo_version, csrb_version, ctp_version, interval)
     num_contexts_exist = 0
     for context in contexts:
-        num_contexts_exist += SPC.exists(comp.dataset('means').product(context))
+        num_contexts_exist += SPC.exists(comp.dataset('out').product(context))
     LOG.info("Interval {} has {}/{} contexts existing".format(interval, num_contexts_exist, len(contexts)))
     missing_contexts = len(contexts) - num_contexts_exist
     if missing_contexts > 3:
@@ -86,8 +84,8 @@ for interval in intervals:
     contexts = comp.find_contexts(platform, hirs_version, collo_version, csrb_version, ctp_version, interval)
     LOG.info("\tThere are {} contexts in this interval".format(len(contexts)))
     contexts.sort()
-    #for context in contexts:
-        #LOG.debug(context)
+    for context in contexts:
+        LOG.debug(context)
     LOG.info("\tFirst context: {}".format(contexts[0]))
     LOG.info("\tLast context:  {}".format(contexts[-1]))
     LOG.info("\t{}".format(safe_submit_order(comp,
