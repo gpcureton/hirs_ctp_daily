@@ -7,7 +7,7 @@ from flo.sw.hirs_ctp_daily import HIRS_CTP_DAILY
 
 # every module should have a LOG object
 import logging, traceback
-LOG = logging.getLogger(__file__)
+LOG = logging.getLogger(__name__)
 
 
 def symlink(c, output, contexts):

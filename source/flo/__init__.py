@@ -8,7 +8,7 @@ from flo.sw.hirs_ctp_orbital import HIRS_CTP_ORBITAL
 
 # every module should have a LOG object
 import logging, traceback
-LOG = logging.getLogger(__file__)
+LOG = logging.getLogger(__name__)
 
 
 class HIRS_CTP_DAILY(Computation):
