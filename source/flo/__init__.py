@@ -15,6 +15,7 @@ from glob import glob
 import shutil
 import logging
 import traceback
+from subprocess import CalledProcessError
 
 from flo.computation import Computation
 from flo.builder import WorkflowNotReady
@@ -42,8 +43,6 @@ from flo.sw.hirs2nc.utils import link_files
 
 # every module should have a LOG object
 LOG = logging.getLogger(__name__)
-
-SPC = StoredProductCatalog()
 
 def set_input_sources(input_locations):
     global delta_catalog
@@ -189,4 +188,4 @@ class HIRS_CTP_DAILY(Computation):
         # Create the CTP daily file for the current day.
         rc, ctp_daily_file = self.create_ctp_daily(inputs, context)
 
-        return {'out': ctp_daily_file}
+        return {'out': nc_compress(ctp_daily_file)}
