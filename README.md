@@ -1,0 +1,1 @@
+This project contains the python code required to run the hirs_ctp_daily package in the Atmosphere-SIPS.
