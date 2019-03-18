@@ -16,6 +16,7 @@ import shutil
 import logging
 import traceback
 from subprocess import CalledProcessError
+import numpy as np
 
 from flo.computation import Computation
 from flo.builder import WorkflowNotReady
@@ -92,12 +93,18 @@ class HIRS_CTP_DAILY(Computation):
 
         # CTP Orbital Input
 
-        day = TimeInterval(context['granule'], (context['granule'] + timedelta(days=1) -
-                                                timedelta(seconds=1)))
-        LOG.debug("day: {}".format(day))
+        granule = context['granule']
+        wedge = timedelta(seconds=1)
+        hour = timedelta(hours=1)
+        day = timedelta(days=1)
+
+        # Add 6 hours to each end of the day to make sure the day is completely covered
+        interval = TimeInterval(context['granule'] - 6*hour, (context['granule'] + day + 6*hour))
+        LOG.info("granule: {}".format(context['granule']))
+        LOG.info("interval: {}".format(interval))
 
         hirs_ctp_orbital_contexts = hirs_ctp_orbital_comp.find_contexts(
-                                                                day,
+                                                                interval,
                                                                 context['satellite'],
                                                                 context['hirs2nc_delivery_id'],
                                                                 context['hirs_avhrr_delivery_id'],
@@ -108,6 +115,49 @@ class HIRS_CTP_DAILY(Computation):
         if len(hirs_ctp_orbital_contexts) == 0:
             raise WorkflowNotReady('No HIRS_CTP_ORBITAL inputs available for {}'.format(context['granule']))
 
+        LOG.info("There are {} CTP Orbital contexts.".format(len(hirs_ctp_orbital_contexts)))
+
+        #for context in hirs_ctp_orbital_contexts:
+            #LOG.info(context)
+
+        # Knock off all but the last of the "previous" day's contexts
+        this_day = granule.day
+        previous_day = (granule - day + wedge).day
+        next_day = (granule + day + wedge).day
+        LOG.info("previous_day: {}".format(previous_day))
+        LOG.info("this_day: {}".format(this_day))
+        LOG.info("next_day: {}".format(next_day))
+
+        start_idx = 0
+        end_idx = -1
+        num_contexts = len(hirs_ctp_orbital_contexts)
+
+        indices = np.arange(num_contexts)
+        reverse_indices = np.flip(np.arange(num_contexts)-num_contexts, axis=0)
+
+        # have this set to zero unless we need to set it otherwise (say for Metop-B)
+        interval_pad = 0
+
+        # Pruning all but the last of the previous day's contexts
+        for idx in indices:
+            if hirs_ctp_orbital_contexts[idx+interval_pad]['granule'].day == this_day:
+                start_idx = idx
+                LOG.info("Breaking: start_idx = {}, granule = {}".format(
+                    start_idx, hirs_ctp_orbital_contexts[start_idx]['granule']))
+                break
+
+        # Pruning all but the first of the next day's contexts
+        for idx in reverse_indices:
+            if hirs_ctp_orbital_contexts[idx-interval_pad]['granule'].day == this_day:
+                end_idx = idx
+                LOG.info("Breaking: end_idx = {}, granule = {}".format(
+                    end_idx, hirs_ctp_orbital_contexts[end_idx]['granule']))
+                break
+
+        hirs_ctp_orbital_contexts = hirs_ctp_orbital_contexts[start_idx:end_idx+1]
+        for context in hirs_ctp_orbital_contexts:
+            LOG.info("{}".format(context))
+
         for idx,context in enumerate(hirs_ctp_orbital_contexts):
             hirs_ctp_orbital_prod = hirs_ctp_orbital_comp.dataset('out').product(context)
             if SPC.exists(hirs_ctp_orbital_prod):
@@ -115,7 +165,7 @@ class HIRS_CTP_DAILY(Computation):
 
     def create_ctp_daily(self, inputs, context):
         '''
-        Create the CFSR statistics for the current day.
+        Create the CTP statistics for the current day.
         '''
 
         rc = 0
